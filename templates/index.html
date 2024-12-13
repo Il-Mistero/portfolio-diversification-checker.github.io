@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Analysis Tool</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        /* Modern dark theme color scheme */
+        :root {
+            --primary-bg: #1a1a2e;
+            --secondary-bg: #16213e;
+            --card-bg: #0f3460;
+            --accent-color: #e94560;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c1ec;
+            --success-color: #4CAF50;
+            --info-color: #2196F3;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --hover-transition: all 0.3s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-bg), var(--secondary-bg));
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1 {
+            color: #00fff2;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 255, 242, 0.5),
+                         0 0 20px rgba(0, 255, 242, 0.3),
+                         0 0 30px rgba(0, 255, 242, 0.2);
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px rgba(0, 255, 242, 0.5),
+                             0 0 20px rgba(0, 255, 242, 0.3),
+                             0 0 30px rgba(0, 255, 242, 0.2);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(0, 255, 242, 0.6),
+                             0 0 30px rgba(0, 255, 242, 0.4),
+                             0 0 40px rgba(0, 255, 242, 0.3);
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: none;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            transition: var(--hover-transition);
+            backdrop-filter: blur(10px);
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .card-title {
+            color: var(--accent-color);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .form-control {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            transition: var(--hover-transition);
+        }
+
+        .form-control:focus {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(233, 69, 96, 0.25);
+            color: var(--text-primary);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .form-select {
+            background-color: white;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: black;
+            border-radius: 10px;
+            padding: 0.75rem;
+        }
+
+        .form-select:focus {
+            background-color: white;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(233, 69, 96, 0.25);
+            color: black;
+        }
+
+        .form-select option {
+            background-color: white;
+            color: black;
+        }
+
+        .btn {
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: var(--hover-transition);
+            border: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, var(--success-color), #45a049);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(45deg, var(--info-color), #1976D2);
+            color: white;
+        }
+
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+        }
+
+        /* Analysis Results Styling */
+        .analysis-results {
+            margin-top: 3rem;
+        }
+
+        .analysis-results h3 {
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .analysis-results .card {
+            background: var(--card-bg);
+            margin-bottom: 2rem;
+        }
+
+        .analysis-results img {
+            border-radius: 12px;
+            margin: 1rem 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Key Metrics Styling */
+        .card-text {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        /* Loading Spinner */
+        .spinner-border {
+            color: var(--accent-color);
+            width: 3rem;
+            height: 3rem;
+        }
+
+        /* Alert Styling */
+        .alert {
+            background: rgba(233, 69, 96, 0.2);
+            border: none;
+            border-radius: 10px;
+            color: var(--text-primary);
+            border-left: 4px solid var(--accent-color);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .card-body {
+                padding: 1.5rem;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        /* Label styling */
+        .form-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Portfolio Analysis Tool</h1>
+
+        <div class="card">
+            <div class="card-body">
+                <form id="portfolio-form" onsubmit="return false;">
+                    <div id="input-container">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" placeholder="Ticker (e.g., AAPL)" name="ticker[]" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" placeholder="Investment Amount (e.g., 1000)" name="investment[]" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-info me-2" id="add-inputs">Add More Inputs</button>
+                        <button type="button" class="btn btn-danger" id="remove-inputs">Remove Last Input</button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="period" class="form-label">Period:</label>
+                        <select class="form-select" id="period" name="period">
+                            <option value="1mo">1 Month</option>
+                            <option value="3mo">3 Months</option>
+                            <option value="6mo">6 Months</option>
+                            <option value="1y" selected>1 Year</option>
+                            <option value="5y">5 Years</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">Analyze Portfolio</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="results" class="mt-5"></div>
+    </div>
+
+    <script>
+        console.log('Script loaded');
+
+        document.getElementById('portfolio-form').addEventListener('submit', async (event) => {
+            console.log('Form submitted');
+            event.preventDefault();
+            
+            // Clear previous results and show loading
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+            // Get form data
+            const tickerInputs = Array.from(document.querySelectorAll('input[name="ticker[]"]'));
+            const investmentInputs = Array.from(document.querySelectorAll('input[name="investment[]"]'));
+            
+            console.log('Raw inputs:', { tickerInputs, investmentInputs });
+
+            // Filter and process inputs
+            const tickers = tickerInputs
+                .map(input => input.value.trim())
+                .filter(value => value !== '');
+            
+            const investments = investmentInputs
+                .map(input => input.value.trim())
+                .filter(value => value !== '');
+            
+            const period = document.getElementById('period').value;
+
+            console.log('Processed data:', { tickers, investments, period });
+
+            // Validate inputs
+            if (tickers.length === 0 || investments.length === 0) {
+                resultsDiv.innerHTML = '<div class="alert alert-danger">Please enter at least one ticker and investment amount.</div>';
+                return;
+            }
+
+            const data = {
+                ticker: tickers,
+                investment: investments,
+                period: period
+            };
+
+            console.log('Sending data:', data);
+
+            try {
+                console.log('Making fetch request...');
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                console.log('Response received:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+
+                const result = await response.text();
+                console.log('Result received:', result.substring(0, 100) + '...');
+                resultsDiv.innerHTML = result;
+            } catch (error) {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        Error: ${error.message}
+                        <br>
+                        Please check your inputs and try again.
+                    </div>`;
+            }
+        });
+
+        document.querySelector('button[type="submit"]').addEventListener('click', function(e) {
+            console.log('Submit button clicked');
+            const form = document.getElementById('portfolio-form');
+            const event = new Event('submit');
+            form.dispatchEvent(event);
+        });
+
+        document.getElementById('add-inputs').addEventListener('click', () => {
+            console.log('Add inputs button clicked');
+            const container = document.getElementById('input-container');
+            const newRow = document.createElement('div');
+            newRow.classList.add('row', 'mb-3');
+            newRow.innerHTML = `
+                <div class="col-md-6">
+                    <input type="text" class="form-control" placeholder="Ticker (e.g., NFLX)" name="ticker[]">
+                </div>
+                <div class="col-md-6">
+                    <input type="text" class="form-control" placeholder="Investment Amount (e.g., 1200)" name="investment[]">
+                </div>`;
+            container.appendChild(newRow);
+        });
+
+        document.getElementById('remove-inputs').addEventListener('click', () => {
+            const container = document.getElementById('input-container');
+            const rows = container.getElementsByClassName('row');
+            if (rows.length > 1) {  // Keep at least one row
+                container.removeChild(rows[rows.length - 1]);
+            }
+        });
+    </script>
+</body>
+</html>
