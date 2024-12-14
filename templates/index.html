@@ -9,12 +9,12 @@
     <style>
         /* Modern dark theme color scheme */
         :root {
-            --primary-bg: #1a1a2e;
-            --secondary-bg: #16213e;
-            --card-bg: #0f3460;
+            --primary-bg: #000000;
+            --secondary-bg: #1a1a2e;
+            --card-bg: #162447;
             --accent-color: #e94560;
             --text-primary: #ffffff;
-            --text-secondary: #b8c1ec;
+            --text-secondary: #8892b0;
             --success-color: #4CAF50;
             --info-color: #2196F3;
             --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -22,7 +22,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, var(--primary-bg), var(--secondary-bg));
+            background: var(--primary-bg);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: var(--text-primary);
             line-height: 1.6;
@@ -35,41 +35,53 @@
             padding: 2rem;
         }
 
-        h1 {
-            color: #00fff2;
-            font-weight: 600;
+        /* Title specific styling */
+        h1.title-spacing {    /* Add this class to your h1 title */
             text-align: center;
-            margin-bottom: 2rem;
+            margin-top: 3rem;     /* Added top margin to bring title down */
+            margin-bottom: 1rem;
             font-size: 2.8rem;
             text-transform: uppercase;
             letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(0, 255, 242, 0.5),
-                         0 0 20px rgba(0, 255, 242, 0.3),
-                         0 0 30px rgba(0, 255, 242, 0.2);
-            position: relative;
-            display: inline-block;
-            width: 100%;
-            animation: glow 1.5s ease-in-out infinite alternate;
+            line-height: 1.2;
         }
 
-        @keyframes glow {
-            from {
-                text-shadow: 0 0 10px rgba(0, 255, 242, 0.5),
-                             0 0 20px rgba(0, 255, 242, 0.3),
-                             0 0 30px rgba(0, 255, 242, 0.2);
+        h1.title-spacing span {
+            display: inline-block;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1.title-spacing span.white-text {
+            color: var(--text-primary);
+        }
+
+        h1.title-spacing span.gradient-text {
+            background: linear-gradient(45deg, #ff0080, #ff8c00, #40e0d0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradient 5s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
             }
-            to {
-                text-shadow: 0 0 20px rgba(0, 255, 242, 0.6),
-                             0 0 30px rgba(0, 255, 242, 0.4),
-                             0 0 40px rgba(0, 255, 242, 0.3);
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
             }
         }
 
         .card {
-            background: var(--card-bg);
+            background: var(--secondary-bg);
             border: none;
             border-radius: 15px;
-            box-shadow: var(--card-shadow);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             transition: var(--hover-transition);
             backdrop-filter: blur(10px);
             margin-bottom: 1.5rem;
@@ -93,7 +105,7 @@
 
         .form-control {
             background-color: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             padding: 0.75rem;
             color: var(--text-primary);
@@ -232,11 +244,63 @@
             font-weight: 500;
             margin-bottom: 0.5rem;
         }
+
+        /* Header navigation styling */
+        .header-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            width: 100%;
+            margin-bottom: 2rem;  /* Space before the main title */
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;  /* Space between logo and text */
+        }
+
+        .logo-image {
+            height: 40px;  /* Adjust based on your logo size */
+            width: auto;
+        }
+
+        .company-name {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .contact-link {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 1.1rem;
+            transition: color 0.3s ease;
+        }
+
+        .contact-link:hover {
+            color: var(--accent-color);
+        }
     </style>
 </head>
 <body>
     <div class="container mt-5">
-        <h1>Portfolio Analysis Tool</h1>
+        <nav class="header-nav">
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Deep FinOne Logo" class="logo-image">
+                <span class="company-name">Deep FinOne</span>
+            </div>
+            <a href="#" class="contact-link">Contact Us</a>
+        </nav>
+
+        <h1 class="title-spacing">
+            <span class="white-text">PORTFOLIO </span>
+            <span class="white-text">DIVERSIFICATION </span>
+            <span class="gradient-text">ANALYZER</span>
+        </h1>
+        <br><br>
 
         <div class="card">
             <div class="card-body">
@@ -264,7 +328,7 @@
                             <option value="3mo">3 Months</option>
                             <option value="6mo">6 Months</option>
                             <option value="1y" selected>1 Year</option>
-                            <option value="5y">5 Years</option>
+                            <option value="2y">2 Years</option>
                         </select>
                     </div>
 
@@ -339,7 +403,33 @@
 
                 const result = await response.text();
                 console.log('Result received:', result.substring(0, 100) + '...');
-                resultsDiv.innerHTML = result;
+                
+                // Add a small delay before showing results
+                setTimeout(() => {
+                    resultsDiv.innerHTML = result;
+                    
+                    // Verify all images are loaded
+                    const images = resultsDiv.getElementsByTagName('img');
+                    let loadedImages = 0;
+                    
+                    Array.from(images).forEach(img => {
+                        if (img.complete) {
+                            loadedImages++;
+                        } else {
+                            img.addEventListener('load', () => {
+                                loadedImages++;
+                                if (loadedImages === images.length) {
+                                    console.log('All images loaded successfully');
+                                }
+                            });
+                            
+                            img.addEventListener('error', () => {
+                                console.error('Error loading image:', img.src);
+                            });
+                        }
+                    });
+                }, 10000); // Changed to 5 seconds (5000 milliseconds)
+
             } catch (error) {
                 console.error('Error:', error);
                 resultsDiv.innerHTML = `

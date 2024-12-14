@@ -141,6 +141,59 @@ def analyze():
             corr_chart = base64.b64encode(corr_buffer.getvalue()).decode('utf-8')
             plt.close()
 
+            # Calculate individual asset metrics
+            asset_returns = returns.mean() * 252  # Annualized returns
+            asset_volatility = returns.std() * np.sqrt(252)  # Annualized volatility
+
+            # Create risk-return scatter plot
+            plt.figure(figsize=(15, 10))  # Matching the size of your other plots
+            plt.style.use('dark_background')  # To match your dark theme
+
+            plt.scatter(asset_volatility, asset_returns, 
+                       c='#3498db',  # Blue color matching your theme
+                       label='Individual Assets', 
+                       s=100)  # Increased marker size
+
+            plt.scatter(portfolio_volatility, portfolio_return, 
+                       c='#e74c3c',  # Red color matching your theme
+                       label='Portfolio', 
+                       marker='X', 
+                       s=200)  # Increased marker size
+
+            # Add labels for each asset
+            for i, txt in enumerate(tickers):
+                plt.annotate(txt, 
+                            (asset_volatility[i], asset_returns[i]),
+                            xytext=(5, 5), 
+                            textcoords='offset points',
+                            color='white',
+                            fontsize=10,
+                            fontweight='bold')
+
+            plt.xlabel('Volatility (Standard Deviation)', color='white', size=12, weight='bold')
+            plt.ylabel('Expected Return', color='white', size=12, weight='bold')
+            plt.title('Risk vs Return Analysis', pad=20, size=18, color='white', weight='bold')
+            plt.legend(fontsize=12)
+            plt.grid(True, alpha=0.2)
+
+            # Style the axes
+            plt.gca().spines['bottom'].set_color('white')
+            plt.gca().spines['left'].set_color('white')
+            plt.gca().tick_params(colors='white')
+
+            # Save the plot
+            risk_return_buffer = BytesIO()
+            plt.savefig(risk_return_buffer, 
+                        format='png', 
+                        bbox_inches='tight', 
+                        dpi=150,
+                        pad_inches=0.5,
+                        facecolor='#0f3460',
+                        edgecolor='none')
+            risk_return_buffer.seek(0)
+            risk_return_chart = base64.b64encode(risk_return_buffer.getvalue()).decode('utf-8')
+            plt.close()
+
             response_html = f'''
                 <div class="container-fluid mt-4">
                     <h3 class="mb-4 text-center">Portfolio Analysis Results</h3>
@@ -161,6 +214,23 @@ def analyze():
                                         <div class="col-md-4">
                                             <p class="card-text">Sharpe Ratio: {sharpe_ratio:.2f}</p>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Risk-Return Analysis Card -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Risk-Return Analysis</h5>
+                                    <div class="d-flex justify-content-center">
+                                        <img src="data:image/png;base64,{risk_return_chart}" 
+                                             class="img-fluid" 
+                                             alt="Risk-Return Analysis"
+                                             style="max-width:90%; width: 700px; max-height: 90%; height: 500px; object-fit: contain;">
                                     </div>
                                 </div>
                             </div>
