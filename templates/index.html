@@ -40,7 +40,7 @@
             text-align: center;
             margin-top: 3rem;     /* Added top margin to bring title down */
             margin-bottom: 1rem;
-            font-size: 2.8rem;
+            font-size: 6rem;
             text-transform: uppercase;
             letter-spacing: 2px;
             line-height: 1.2;
@@ -75,6 +75,23 @@
             100% {
                 background-position: 0% 50%;
             }
+        }
+
+        h2.title-spacing {    
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            line-height: 1.2;
+            width: 100%;        /* Added to ensure full width */
+            display: block;     /* Added to ensure block-level element */
+        }
+
+        h2.title-spacing span {
+            display: inline;    /* Changed to inline to keep words together */
+            margin: 0;
+            padding: 0;
         }
 
         .card {
@@ -296,10 +313,13 @@
         </nav>
 
         <h1 class="title-spacing">
+            <span class="gradient-text">BIENVALIA</span>
+        </h1>
+        <h2 class="title-spacing">
             <span class="white-text">PORTFOLIO </span>
             <span class="white-text">DIVERSIFICATION </span>
-            <span class="gradient-text">ANALYZER</span>
-        </h1>
+            <span class="white-text">ANALYZER</span>            
+        </h2>
         <br><br>
 
         <div class="card">
