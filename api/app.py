@@ -3,7 +3,6 @@ matplotlib.use('Agg')
 
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
-from flask_caching import Cache
 import yfinance as yf
 import numpy as np
 import pandas as pd
@@ -15,15 +14,18 @@ import requests
 from bs4 import BeautifulSoup
 import json
 from datetime import datetime
-import time 
+import os
 
-app = Flask(__name__, template_folder="templates")
+template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static'))
+
+app = Flask(__name__, 
+           template_folder=template_dir,
+           static_folder=static_dir,
+           static_url_path='/static')
 CORS(app)
 
-cache = Cache(app, config={
-    'CACHE_TYPE': 'simple',
-    'CACHE_DEFAULT_TIMEOUT': 3600  
-})
+SP500_STOCKS = {}
 
 def get_sp500_symbols():
     """Fetch S&P 500 symbols and company names"""
@@ -40,47 +42,32 @@ def get_sp500_symbols():
         print(f"Error fetching S&P 500 data: {e}")
         return {}
 
-SP500_STOCKS = {}
-
-@cache.memoize(timeout=3600)
 def get_stock_data(tickers, period):
-    """Cached function to get stock data"""
-    return yf.download(tickers, period=period)
-
-def update_stock_data():
-    """Update the S&P 500 stock data"""
-    global SP500_STOCKS
-    SP500_STOCKS = get_sp500_symbols()
-    
-    with open('static/sp500_stocks.json', 'w') as f:
-        json.dump(SP500_STOCKS, f)
+    """Function to get stock data without caching"""
+    try:
+        return yf.download(tickers, period=period)
+    except Exception as e:
+        print(f"Error downloading stock data: {e}")
+        return pd.DataFrame()
 
 @app.route('/get_stocks')
 def get_stocks():
     """Get S&P 500 stocks"""
     try:
-        if not SP500_STOCKS:
-            try:
-                with open('static/sp500_stocks.json', 'r') as f:
-                    SP500_STOCKS.update(json.load(f))
-            except:
-                update_stock_data()
-        
-        return jsonify(SP500_STOCKS)
+        stocks = get_sp500_symbols()
+        return jsonify(stocks)
     except Exception as e:
         print(f"Error in get_stocks: {e}")
         return jsonify({})
 
 @app.route('/')
 def home():
-    if not SP500_STOCKS:
-        try:
-            with open('static/sp500_stocks.json', 'r') as f:
-                SP500_STOCKS.update(json.load(f))
-        except:
-            update_stock_data()
-    
-    return render_template('index.html', stocks=SP500_STOCKS)
+    try:
+        stocks = get_sp500_symbols()
+        return render_template('index.html', stocks=stocks)
+    except Exception as e:
+        print(f"Error in home route: {e}")
+        return "Error loading page", 500
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -94,6 +81,10 @@ def analyze():
         tickers = data.get('ticker', [])
         investments = data.get('investment', [])
         period = data.get('period', '1y')
+
+        print(f"Processing request for tickers: {tickers}")
+        print(f"Investments: {investments}")
+        print(f"Period: {period}")
 
         if not tickers or not investments:
             return "Error: Missing tickers or investments", 400
@@ -395,8 +386,10 @@ def analyze():
         return response_html
 
     except Exception as e:
+        import traceback
         print(f"Error in analyze route: {str(e)}")
+        print(traceback.format_exc())
         return f"Server error: {str(e)}", 500
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True, port=8000)  # You can change the port number if needed
