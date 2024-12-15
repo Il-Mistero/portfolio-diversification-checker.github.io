@@ -1,15 +1,11 @@
 {
     "version": 2,
-    "builds": [
-        {
-            "src": "app.py",
-            "use": "@vercel/python"
-        },
-        {
-            "src": "static/**",
-            "use": "@vercel/static"
+    "functions": {
+        "api/app.py": {
+            "memory": 1024,
+            "maxDuration": 10
         }
-    ],
+    },
     "routes": [
         {
             "src": "/static/(.*)",
@@ -17,16 +13,10 @@
         },
         {
             "src": "/(.*)",
-            "dest": "app.py"
+            "dest": "/api/app.py"
         }
     ],
     "env": {
         "PYTHONPATH": "."
-    },
-    "functions": {
-        "app.py": {
-            "memory": 1024,
-            "maxDuration": 10
-        }
     }
 }
