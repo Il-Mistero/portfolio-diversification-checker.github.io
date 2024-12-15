@@ -102,8 +102,8 @@ def analyze():
         if not data:
             return "Error: No data received", 400
 
-        # Add the 10-second delay here
-        time.sleep(10)
+        # Change from 10 seconds to 3 seconds
+        time.sleep(3)  # Reduced delay to prevent timeout
 
         tickers = data.get('ticker', [])
         investments = data.get('investment', [])
