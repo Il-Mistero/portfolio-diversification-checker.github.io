@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
-        /* Modern dark theme color scheme */
         :root {
             --primary-bg: #000000;
             --secondary-bg: #1a1a2e;
@@ -35,10 +34,9 @@
             padding: 2rem;
         }
 
-        /* Title specific styling */
-        h1.title-spacing {    /* Add this class to your h1 title */
+        h1.title-spacing {
             text-align: center;
-            margin-top: 3rem;     /* Added top margin to bring title down */
+            margin-top: 3rem;
             margin-bottom: 1rem;
             font-size: 6rem;
             text-transform: uppercase;
@@ -84,12 +82,12 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             line-height: 1.2;
-            width: 100%;        /* Added to ensure full width */
-            display: block;     /* Added to ensure block-level element */
+            width: 100%;
+            display: block;
         }
 
         h2.title-spacing span {
-            display: inline;    /* Changed to inline to keep words together */
+            display: inline;
             margin: 0;
             padding: 0;
         }
@@ -190,7 +188,6 @@
             box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
         }
 
-        /* Analysis Results Styling */
         .analysis-results {
             margin-top: 3rem;
         }
@@ -212,21 +209,18 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        /* Key Metrics Styling */
         .card-text {
             color: var(--text-secondary);
             font-size: 1.1rem;
             margin-bottom: 0.8rem;
         }
 
-        /* Loading Spinner */
         .spinner-border {
             color: var(--accent-color);
             width: 3rem;
             height: 3rem;
         }
 
-        /* Alert Styling */
         .alert {
             background: rgba(233, 69, 96, 0.2);
             border: none;
@@ -235,7 +229,6 @@
             border-left: 4px solid var(--accent-color);
         }
 
-        /* Responsive Adjustments */
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -255,31 +248,29 @@
             }
         }
 
-        /* Label styling */
         .form-label {
             color: var(--text-secondary);
             font-weight: 500;
             margin-bottom: 0.5rem;
         }
 
-        /* Header navigation styling */
         .header-nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 1rem 2rem;
             width: 100%;
-            margin-bottom: 2rem;  /* Space before the main title */
+            margin-bottom: 2rem;
         }
 
         .logo-container {
             display: flex;
             align-items: center;
-            gap: 1rem;  /* Space between logo and text */
+            gap: 1rem;
         }
 
         .logo-image {
-            height: 40px;  /* Adjust based on your logo size */
+            height: 40px;
             width: auto;
         }
 
@@ -301,7 +292,6 @@
             color: var(--accent-color);
         }
 
-        /* Add styles for the stock select dropdowns */
         .stock-select {
             background-color: white;
             color: black;
@@ -318,7 +308,6 @@
             background-color: #f0f0f0;
         }
 
-        /* Style for the exchange filter */
         #exchange-filter {
             margin-bottom: 20px;
             font-weight: bold;
@@ -398,13 +387,11 @@
             resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
 
             try {
-                // Simple selection of all stock selects with values
                 const stockSelects = Array.from(document.querySelectorAll('.stock-select'))
                     .filter(select => select.value !== '');
                     
                 const tickers = stockSelects.map(select => select.value);
                 
-                // Get investment inputs corresponding to selected stocks
                 const investmentInputs = Array.from(document.querySelectorAll('input[name="investment[]"]'))
                     .slice(0, stockSelects.length);
                 
@@ -458,15 +445,12 @@
 
         let stocksData = {};
         
-        // Initialize Choices.js on page load
         document.addEventListener('DOMContentLoaded', async function() {
             try {
-                // Fetch stocks data
                 const response = await fetch('/get_stocks');
                 if (!response.ok) throw new Error('Failed to fetch stocks');
                 stocksData = await response.json();
 
-                // Initialize all existing select elements with Choices.js
                 initializeAllSelects();
             } catch (error) {
                 console.error('Error:', error);
@@ -474,7 +458,6 @@
             }
         });
 
-        // Function to initialize Choices.js on a select element
         function initializeChoices(selectElement) {
             return new Choices(selectElement, {
                 searchEnabled: true,
@@ -489,14 +472,12 @@
             });
         }
 
-        // Function to initialize all select elements
         function initializeAllSelects() {
             document.querySelectorAll('.stock-select').forEach(select => {
                 initializeChoices(select);
             });
         }
 
-        // Add inputs button handler
         document.getElementById('add-inputs').addEventListener('click', () => {
             const container = document.getElementById('input-container');
             const newRow = document.createElement('div');
@@ -512,16 +493,14 @@
                 </div>`;
             container.appendChild(newRow);
 
-            // Initialize Choices.js on the new select
             const newSelect = newRow.querySelector('.stock-select');
             initializeChoices(newSelect);
         });
 
-        // Remove inputs button handler
         document.getElementById('remove-inputs').addEventListener('click', () => {
             const container = document.getElementById('input-container');
             const rows = container.getElementsByClassName('row');
-            if (rows.length > 1) {  // Keep at least one row
+            if (rows.length > 1) { 
                 container.removeChild(rows[rows.length - 1]);
             }
         });
@@ -533,7 +512,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <style>
-        /* Style the Choices dropdown to match your theme */
         .choices {
             margin-bottom: 0;
         }
@@ -564,7 +542,6 @@
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Choices.js for all stock selects
             document.querySelectorAll('.stock-select').forEach(select => {
                 new Choices(select, {
                     searchEnabled: true,
@@ -575,20 +552,17 @@
                 });
             });
 
-            // Modify your existing form submission handler
             document.getElementById('portfolio-form').addEventListener('submit', async (event) => {
                 console.log('Form submitted');
                 event.preventDefault();
                 
-                // Clear previous results and show loading
                 const resultsDiv = document.getElementById('results');
                 resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
 
-                // Get form data and extract ticker symbols
                 const stockSelects = Array.from(document.querySelectorAll('.stock-select'));
                 const investmentInputs = Array.from(document.querySelectorAll('input[name="investment[]"]'));
                 
-                // Extract just the ticker symbols (everything before the first space or dash)
+            
                 const tickers = stockSelects
                     .map(select => select.value.split(/[\s-]/)[0])
                     .filter(value => value !== '');
@@ -599,15 +573,11 @@
                 
                 const period = document.getElementById('period').value;
 
-                console.log('Processed data:', { tickers, investments, period });
-
-                // Rest of your existing form submission code...
-                // Your existing AJAX call and response handling code remains the same
+                console.log('Processed data:', { tickers, investments, period });             
             });
         });
     </script>
     <script>
-        // Initialize Choices.js on the initial select
         document.addEventListener('DOMContentLoaded', function() {
             const initialSelect = document.querySelector('.stock-select');
             if (initialSelect) {
