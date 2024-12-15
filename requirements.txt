@@ -6,3 +6,5 @@ pandas
 seaborn
 matplotlib
 Flask-Caching
+beautifulsoup4
+requests
