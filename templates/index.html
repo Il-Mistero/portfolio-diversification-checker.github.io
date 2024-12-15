@@ -300,6 +300,29 @@
         .contact-link:hover {
             color: var(--accent-color);
         }
+
+        /* Add styles for the stock select dropdowns */
+        .stock-select {
+            background-color: white;
+            color: black;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .stock-select option {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .stock-select option:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Style for the exchange filter */
+        #exchange-filter {
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -324,11 +347,16 @@
 
         <div class="card">
             <div class="card-body">
-                <form id="portfolio-form" onsubmit="return false;">
+                <form id="portfolio-form">
                     <div id="input-container">
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <input type="text" class="form-control" placeholder="Ticker (e.g., AAPL)" name="ticker[]" required>
+                                <select class="form-select stock-select" name="stock[]">
+                                    <option value="">Select a stock</option>
+                                    {% for symbol, name in stocks.items() %}
+                                        <option value="{{ symbol }}">{{ name }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="col-md-6">
                                 <input type="text" class="form-control" placeholder="Investment Amount (e.g., 1000)" name="investment[]" required>
@@ -352,7 +380,7 @@
                         </select>
                     </div>
 
-                    <button type="submit" class="btn btn-success">Analyze Portfolio</button>
+                    <button type="submit" class="btn btn-primary">Analyze Portfolio</button>
                 </form>
             </div>
         </div>
@@ -364,99 +392,59 @@
         console.log('Script loaded');
 
         document.getElementById('portfolio-form').addEventListener('submit', async (event) => {
-            console.log('Form submitted');
             event.preventDefault();
             
-            // Clear previous results and show loading
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
 
-            // Get form data
-            const tickerInputs = Array.from(document.querySelectorAll('input[name="ticker[]"]'));
-            const investmentInputs = Array.from(document.querySelectorAll('input[name="investment[]"]'));
-            
-            console.log('Raw inputs:', { tickerInputs, investmentInputs });
-
-            // Filter and process inputs
-            const tickers = tickerInputs
-                .map(input => input.value.trim())
-                .filter(value => value !== '');
-            
-            const investments = investmentInputs
-                .map(input => input.value.trim())
-                .filter(value => value !== '');
-            
-            const period = document.getElementById('period').value;
-
-            console.log('Processed data:', { tickers, investments, period });
-
-            // Validate inputs
-            if (tickers.length === 0 || investments.length === 0) {
-                resultsDiv.innerHTML = '<div class="alert alert-danger">Please enter at least one ticker and investment amount.</div>';
-                return;
-            }
-
-            const data = {
-                ticker: tickers,
-                investment: investments,
-                period: period
-            };
-
-            console.log('Sending data:', data);
-
             try {
-                console.log('Making fetch request...');
+                // Simple selection of all stock selects with values
+                const stockSelects = Array.from(document.querySelectorAll('.stock-select'))
+                    .filter(select => select.value !== '');
+                    
+                const tickers = stockSelects.map(select => select.value);
+                
+                // Get investment inputs corresponding to selected stocks
+                const investmentInputs = Array.from(document.querySelectorAll('input[name="investment[]"]'))
+                    .slice(0, stockSelects.length);
+                
+                const investments = investmentInputs.map(input => input.value.trim());
+                const period = document.getElementById('period').value;
+
+                console.log('Submitting:', {
+                    tickers,
+                    investments,
+                    period
+                });
+
                 const response = await fetch('/analyze', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({
+                        ticker: tickers,
+                        investment: investments,
+                        period: period
+                    })
                 });
-
-                console.log('Response received:', response.status);
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    throw new Error(errorText);
+                    throw new Error(errorText || `HTTP error! status: ${response.status}`);
                 }
 
                 const result = await response.text();
-                console.log('Result received:', result.substring(0, 100) + '...');
-                
-                // Add a small delay before showing results
-                setTimeout(() => {
-                    resultsDiv.innerHTML = result;
-                    
-                    // Verify all images are loaded
-                    const images = resultsDiv.getElementsByTagName('img');
-                    let loadedImages = 0;
-                    
-                    Array.from(images).forEach(img => {
-                        if (img.complete) {
-                            loadedImages++;
-                        } else {
-                            img.addEventListener('load', () => {
-                                loadedImages++;
-                                if (loadedImages === images.length) {
-                                    console.log('All images loaded successfully');
-                                }
-                            });
-                            
-                            img.addEventListener('error', () => {
-                                console.error('Error loading image:', img.src);
-                            });
-                        }
-                    });
-                }, 10000); // Changed to 5 seconds (5000 milliseconds)
+                resultsDiv.innerHTML = result;
+                resultsDiv.scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) {
                 console.error('Error:', error);
                 resultsDiv.innerHTML = `
                     <div class="alert alert-danger">
-                        Error: ${error.message}
-                        <br>
-                        Please check your inputs and try again.
+                        <h4>Analysis Error</h4>
+                        <p>${error.message}</p>
+                        <p>Please try again or contact support if the problem persists.</p>
                     </div>`;
             }
         });
@@ -468,21 +456,68 @@
             form.dispatchEvent(event);
         });
 
+        let stocksData = {};
+        
+        // Initialize Choices.js on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Fetch stocks data
+                const response = await fetch('/get_stocks');
+                if (!response.ok) throw new Error('Failed to fetch stocks');
+                stocksData = await response.json();
+
+                // Initialize all existing select elements with Choices.js
+                initializeAllSelects();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to load S&P 500 stock data. Please try again later.');
+            }
+        });
+
+        // Function to initialize Choices.js on a select element
+        function initializeChoices(selectElement) {
+            return new Choices(selectElement, {
+                searchEnabled: true,
+                searchPlaceholderValue: "Search for a stock...",
+                placeholder: true,
+                placeholderValue: "Select a stock",
+                removeItemButton: true,
+                choices: Object.entries(stocksData).map(([symbol, name]) => ({
+                    value: symbol,
+                    label: `${symbol} - ${name}`
+                }))
+            });
+        }
+
+        // Function to initialize all select elements
+        function initializeAllSelects() {
+            document.querySelectorAll('.stock-select').forEach(select => {
+                initializeChoices(select);
+            });
+        }
+
+        // Add inputs button handler
         document.getElementById('add-inputs').addEventListener('click', () => {
-            console.log('Add inputs button clicked');
             const container = document.getElementById('input-container');
             const newRow = document.createElement('div');
             newRow.classList.add('row', 'mb-3');
             newRow.innerHTML = `
                 <div class="col-md-6">
-                    <input type="text" class="form-control" placeholder="Ticker (e.g., NFLX)" name="ticker[]">
+                    <select class="form-select stock-select" name="stock[]">
+                        <option value="">Select a stock</option>
+                    </select>
                 </div>
                 <div class="col-md-6">
-                    <input type="text" class="form-control" placeholder="Investment Amount (e.g., 1200)" name="investment[]">
+                    <input type="text" class="form-control" placeholder="Investment Amount (e.g., 1000)" name="investment[]" required>
                 </div>`;
             container.appendChild(newRow);
+
+            // Initialize Choices.js on the new select
+            const newSelect = newRow.querySelector('.stock-select');
+            initializeChoices(newSelect);
         });
 
+        // Remove inputs button handler
         document.getElementById('remove-inputs').addEventListener('click', () => {
             const container = document.getElementById('input-container');
             const rows = container.getElementsByClassName('row');
@@ -495,5 +530,96 @@
         window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     </script>
     <script defer src="/_vercel/insights/script.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <style>
+        /* Style the Choices dropdown to match your theme */
+        .choices {
+            margin-bottom: 0;
+        }
+
+        .choices__inner {
+            background-color: white;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .choices__input {
+            background-color: white;
+            color: black;
+        }
+
+        .choices__list--dropdown {
+            background-color: white;
+            color: black;
+        }
+
+        .choices__list--dropdown .choices__item--selectable {
+            padding: 8px;
+        }
+
+        .choices__list--dropdown .choices__item--selectable.is-highlighted {
+            background-color: #f0f0f0;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Choices.js for all stock selects
+            document.querySelectorAll('.stock-select').forEach(select => {
+                new Choices(select, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: "Search for a stock...",
+                    placeholder: true,
+                    placeholderValue: "Select a stock",
+                    removeItemButton: true
+                });
+            });
+
+            // Modify your existing form submission handler
+            document.getElementById('portfolio-form').addEventListener('submit', async (event) => {
+                console.log('Form submitted');
+                event.preventDefault();
+                
+                // Clear previous results and show loading
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+                // Get form data and extract ticker symbols
+                const stockSelects = Array.from(document.querySelectorAll('.stock-select'));
+                const investmentInputs = Array.from(document.querySelectorAll('input[name="investment[]"]'));
+                
+                // Extract just the ticker symbols (everything before the first space or dash)
+                const tickers = stockSelects
+                    .map(select => select.value.split(/[\s-]/)[0])
+                    .filter(value => value !== '');
+                
+                const investments = investmentInputs
+                    .map(input => input.value.trim())
+                    .filter(value => value !== '');
+                
+                const period = document.getElementById('period').value;
+
+                console.log('Processed data:', { tickers, investments, period });
+
+                // Rest of your existing form submission code...
+                // Your existing AJAX call and response handling code remains the same
+            });
+        });
+    </script>
+    <script>
+        // Initialize Choices.js on the initial select
+        document.addEventListener('DOMContentLoaded', function() {
+            const initialSelect = document.querySelector('.stock-select');
+            if (initialSelect) {
+                new Choices(initialSelect, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: "Search for a stock...",
+                    placeholder: true,
+                    placeholderValue: "Select a stock",
+                    removeItemButton: true
+                });
+            }
+        });
+    </script>
 </body>
 </html>
