@@ -15,6 +15,7 @@ from bs4 import BeautifulSoup
 import json
 from datetime import datetime
 import os
+import logging
 
 template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
 static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static'))
@@ -27,23 +28,47 @@ CORS(app)
 
 SP500_STOCKS = {}
 
-def get_sp500_symbols():
-    """Fetch S&P 500 symbols and company names"""
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+def get_stock_symbols():
+    """Fetch stock list from local JSON file"""
     try:
-        url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-        response = requests.get(url)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        table = soup.find('table', {'class': 'wikitable'})
+        logger.info("Starting to fetch stock symbols")
         
-        df = pd.read_html(str(table))[0]
-        return {row['Symbol']: f"{row['Symbol']} - {row['Security']}" 
-                for _, row in df.iterrows()}
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        json_path = os.path.join(current_dir, 'stocks.json')
+        
+        logger.info(f"Attempting to read from: {json_path}")
+        
+
+        try:
+            with open(json_path, 'r', encoding='utf-8') as file:
+                stocks_data = json.load(file)
+                logger.info(f"Successfully loaded JSON data with {len(stocks_data)} entries")
+        except FileNotFoundError:
+            logger.error(f"stocks.json not found at {json_path}")
+            return {}
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON: {e}")
+            return {}
+        
+        # Create dictionary of stocks
+        stocks_dict = {}
+        for stock in stocks_data:
+            if 'symbol' in stock and 'name' in stock:
+                symbol = stock['symbol']
+                name = stock['name']
+                stocks_dict[symbol] = f"{symbol} - {name}"
+        
+        logger.info(f"Successfully processed {len(stocks_dict)} stocks")
+        return stocks_dict
+
     except Exception as e:
-        print(f"Error fetching S&P 500 data: {e}")
+        logger.error(f"Error in get_stock_symbols: {e}", exc_info=True)
         return {}
 
 def get_stock_data(tickers, period):
-    """Function to get stock data without caching"""
     try:
         return yf.download(tickers, period=period)
     except Exception as e:
@@ -52,21 +77,34 @@ def get_stock_data(tickers, period):
 
 @app.route('/get_stocks')
 def get_stocks():
-    """Get S&P 500 stocks"""
     try:
-        stocks = get_sp500_symbols()
+        logger.info("Handling /get_stocks request")
+        stocks = get_stock_symbols()
+        
+        if not stocks:
+            logger.error("No stocks were fetched")
+            return jsonify({"error": "Failed to fetch stocks"}), 500
+            
+        logger.info(f"Successfully returning {len(stocks)} stocks")
         return jsonify(stocks)
+        
     except Exception as e:
-        print(f"Error in get_stocks: {e}")
-        return jsonify({})
+        logger.error(f"Error in get_stocks route: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/')
 def home():
     try:
-        stocks = get_sp500_symbols()
+        logger.info("Handling home page request")
+        stocks = get_stock_symbols()
+        
+        if not stocks:
+            logger.warning("No stocks available for home page")
+            
         return render_template('index.html', stocks=stocks)
+        
     except Exception as e:
-        print(f"Error in home route: {e}")
+        logger.error(f"Error in home route: {e}", exc_info=True)
         return "Error loading page", 500
 
 @app.route('/analyze', methods=['POST'])
@@ -391,5 +429,21 @@ def analyze():
         print(traceback.format_exc())
         return f"Server error: {str(e)}", 500
 
+@app.route('/search_stocks')
+def search_stocks():
+    try:
+        query = request.args.get('query', '').upper()
+        stocks = get_stock_symbols()
+        
+        filtered_stocks = {
+            k: v for k, v in stocks.items() 
+            if query in k.upper() or query in v.upper()
+        }
+        
+        return jsonify(filtered_stocks)
+    except Exception as e:
+        logger.error(f"Error in search_stocks: {e}")
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
-    app.run(debug=True, port=8000)  # You can change the port number if needed
+    app.run(debug=True, port=8000)
